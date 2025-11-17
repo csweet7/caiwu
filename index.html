@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人投资财务统计 - 投资组合管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #8B9A7A 0%, #F5F1E8 100%);
+            min-height: 100vh;
+        }
+        .hero-bg {
+            background-image: url('resources/hero-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .portfolio-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #8B9A7A, #D4B896);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .data-card {
+            background: linear-gradient(135deg, rgba(139, 154, 122, 0.1), rgba(212, 184, 150, 0.1));
+            border: 1px solid rgba(139, 154, 122, 0.2);
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .table-row:hover {
+            background: rgba(139, 154, 122, 0.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-effect">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-xl font-bold text-white">💰 投资管理</h1>
+                    </div>
+                </div>
+                <div class="flex space-x-8">
+                    <a href="index.html" class="text-white hover:text-yellow-300 px-3 py-2 rounded-md text-sm font-medium transition-colors border-b-2 border-yellow-300">投资组合</a>
+                    <a href="analytics.html" class="text-white hover:text-yellow-300 px-3 py-2 rounded-md text-sm font-medium transition-colors">数据分析</a>
+                    <a href="records.html" class="text-white hover:text-yellow-300 px-3 py-2 rounded-md text-sm font-medium transition-colors">交易记录</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero区域 -->
+    <section class="hero-bg pt-16 pb-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="text-center">
+                <h1 class="text-4xl md:text-6xl font-bold font-serif text-white mb-6 animate-float">
+                    智能投资管理
+                </h1>
+                <p class="text-xl text-gray-100 mb-8 max-w-2xl mx-auto">
+                    统一管理A股、美股、虚拟货币投资组合，实时追踪资产变化，智能分析投资收益
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+                    <div class="data-card rounded-lg p-6 text-center">
+                        <div class="text-2xl font-bold text-white mb-2" id="total-usd">$0.00</div>
+                        <div class="text-sm text-gray-200">总资产 (USD)</div>
+                    </div>
+                    <div class="data-card rounded-lg p-6 text-center">
+                        <div class="text-2xl font-bold text-white mb-2" id="total-cny">¥0.00</div>
+                        <div class="text-sm text-gray-200">总资产 (CNY)</div>
+                    </div>
+                    <div class="data-card rounded-lg p-6 text-center">
+                        <div class="text-2xl font-bold text-white mb-2" id="exchange-rate">1 USD = 7.1500 CNY</div>
+                        <div class="text-sm text-gray-200">当前汇率</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 主要内容区域 -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <!-- 左侧：添加资产表单 -->
+            <div class="lg:col-span-1">
+                <div class="portfolio-card rounded-lg p-6 mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-6 h-6 bg-gradient-to-r from-green-400 to-blue-500 rounded-full mr-3"></span>
+                        添加资产
+                    </h2>
+                    <form class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">资产类型</label>
+                            <select id="asset-type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <option value="">选择类型</option>
+                                <option value="美股">美股</option>
+                                <option value="A股">A股</option>
+                                <option value="虚拟货币">虚拟货币</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">资产代码</label>
+                            <select id="asset-symbol" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <option value="">选择资产</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">持有份额</label>
+                            <input type="number" id="asset-shares" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="输入份额">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">平均成本</label>
+                            <input type="number" id="asset-cost" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="输入成本价">
+                        </div>
+                        <button type="button" id="add-asset-btn" class="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white py-2 px-4 rounded-md hover:from-green-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105">
+                            添加资产
+                        </button>
+                    </form>
+                </div>
+
+                <!-- 快速操作面板 -->
+                <div class="portfolio-card rounded-lg p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">快速操作</h3>
+                    <div class="space-y-3">
+                        <button id="refresh-prices" class="w-full bg-yellow-500 text-white py-2 px-4 rounded-md hover:bg-yellow-600 transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>刷新价格
+                        </button>
+                        <button onclick="exportData()" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors">
+                            导出数据
+                        </button>
+                        <button onclick="importData()" class="w-full bg-purple-500 text-white py-2 px-4 rounded-md hover:bg-purple-600 transition-colors">
+                            导入数据
+                        </button>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="text-xs text-gray-500">
+                            最后更新: <span id="last-update">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：投资组合表格 -->
+            <div class="lg:col-span-3">
+                <div class="portfolio-card rounded-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                            <span class="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mr-3"></span>
+                            投资组合
+                        </h2>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-gray-500">价格每30秒自动更新</span>
+                            <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table id="portfolio-table" class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">资产</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">当前价格</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">持有份额</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">市值</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">盈亏</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <!-- 动态生成内容 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 资产分布预览 -->
+                <div class="portfolio-card rounded-lg p-6 mt-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">资产分布概览</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+                            <div class="text-sm opacity-90">美股资产</div>
+                            <div class="text-2xl font-bold" id="us-assets">$0.00</div>
+                        </div>
+                        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-4 text-white">
+                            <div class="text-sm opacity-90">A股资产</div>
+                            <div class="text-2xl font-bold" id="cn-assets">¥0.00</div>
+                        </div>
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 text-white">
+                            <div class="text-sm opacity-90">虚拟货币</div>
+                            <div class="text-2xl font-bold" id="crypto-assets">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <p class="text-sm">© 2024 个人投资财务统计系统. 智能管理您的投资组合.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 加载主要JavaScript -->
+    <script src="main.js"></script>
+    
+    <!-- 添加Font Awesome图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script>
+        // 更新资产分布显示
+        function updateAssetDistribution() {
+            const usAssets = portfolioData.assets.filter(a => a.type === '美股');
+            const cnAssets = portfolioData.assets.filter(a => a.type === 'A股');
+            const cryptoAssets = portfolioData.assets.filter(a => a.type === '虚拟货币');
+            
+            const usTotal = usAssets.reduce((sum, asset) => sum + (asset.price * asset.shares), 0);
+            const cryptoTotal = cryptoAssets.reduce((sum, asset) => sum + (asset.price * asset.shares), 0);
+            const cnTotal = cnAssets.reduce((sum, asset) => sum + (asset.price * asset.shares), 0);
+            
+            document.getElementById('us-assets').textContent = `$${usTotal.toFixed(2)}`;
+            document.getElementById('cn-assets').textContent = `¥${cnTotal.toFixed(2)}`;
+            document.getElementById('crypto-assets').textContent = `$${cryptoTotal.toFixed(2)}`;
+        }
+        
+        // 重写updatePortfolioDisplay以包含资产分布更新
+        const originalUpdatePortfolioDisplay = updatePortfolioDisplay;
+        updatePortfolioDisplay = function() {
+            originalUpdatePortfolioDisplay();
+            updateAssetDistribution();
+        };
+        
+        // 页面加载完成后的额外初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 添加滚动效果
+            window.addEventListener('scroll', function() {
+                const nav = document.querySelector('nav');
+                if (window.scrollY > 100) {
+                    nav.style.background = 'rgba(0, 0, 0, 0.9)';
+                } else {
+                    nav.style.background = 'rgba(255, 255, 255, 0.1)';
+                }
+            });
+            
+            // 添加表格行悬停效果
+            document.addEventListener('mouseover', function(e) {
+                if (e.target.closest('tr') && e.target.closest('#portfolio-table')) {
+                    e.target.closest('tr').style.transform = 'scale(1.01)';
+                    e.target.closest('tr').style.transition = 'transform 0.2s ease';
+                }
+            });
+            
+            document.addEventListener('mouseout', function(e) {
+                if (e.target.closest('tr') && e.target.closest('#portfolio-table')) {
+                    e.target.closest('tr').style.transform = 'scale(1)';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

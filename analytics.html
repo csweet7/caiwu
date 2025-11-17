@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据分析 - 个人投资财务统计</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #8B9A7A 0%, #F5F1E8 100%);
+            min-height: 100vh;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .analytics-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #8B9A7A, #D4B896);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .chart-container {
+            height: 400px;
+        }
+        .metric-card {
+            background: linear-gradient(135deg, rgba(139, 154, 122, 0.1), rgba(212, 184, 150, 0.1));
+            border: 1px solid rgba(139, 154, 122, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-effect">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-xl font-bold text-white">💰 投资管理</h1>
+                    </div>
+                </div>
+                <div class="flex space-x-8">
+                    <a href="index.html" class="text-white hover:text-yellow-300 px-3 py-2 rounded-md text-sm font-medium transition-colors">投资组合</a>
+                    <a href="analytics.html" class="text-white hover:text-yellow-300 px-3 py-2 rounded-md text-sm font-medium transition-colors border-b-2 border-yellow-300">数据分析</a>
+                    <a href="records.html" class="text-white hover:text-yellow-300 px-3 py-2 rounded-md text-sm font-medium transition-colors">交易记录</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <main class="pt-20 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <!-- 页面标题 -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-bold font-serif gradient-text mb-4">
+                    投资数据分析
+                </h1>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    深度分析您的投资组合表现，洞察收益趋势和资产配置
+                </p>
+            </div>
+
+            <!-- 关键指标卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="metric-card rounded-lg p-6 text-center">
+                    <div class="text-2xl font-bold text-green-600 mb-2" id="total-profit">+$0.00</div>
+                    <div class="text-sm text-gray-600">总盈利</div>
+                </div>
+                <div class="metric-card rounded-lg p-6 text-center">
+                    <div class="text-2xl font-bold text-blue-600 mb-2" id="profit-percentage">+0.00%</div>
+                    <div class="text-sm text-gray-600">总收益率</div>
+                </div>
+                <div class="metric-card rounded-lg p-6 text-center">
+                    <div class="text-2xl font-bold text-purple-600 mb-2" id="monthly-profit">+$0.00</div>
+                    <div class="text-sm text-gray-600">本月盈利</div>
+                </div>
+                <div class="metric-card rounded-lg p-6 text-center">
+                    <div class="text-2xl font-bold text-orange-600 mb-2" id="yearly-profit">+$0.00</div>
+                    <div class="text-sm text-gray-600">本年盈利</div>
+                </div>
+            </div>
+
+            <!-- 图表区域 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                
+                <!-- 资产分布饼图 -->
+                <div class="analytics-card rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mr-3"></span>
+                        资产分布
+                    </h3>
+                    <div id="asset-distribution-chart" class="chart-container"></div>
+                </div>
+
+                <!-- 收益趋势图 -->
+                <div class="analytics-card rounded-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-6 h-6 bg-gradient-to-r from-green-500 to-blue-600 rounded-full mr-3"></span>
+                        收益趋势
+                    </h3>
+                    <div id="profit-trend-chart" class="chart-container"></div>
+                </div>
+            </div>
+
+            <!-- 详细分析 -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- 最佳表现资产 -->
+                <div class="analytics-card rounded-lg p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-5 h-5 bg-gradient-to-r from-green-500 to-green-600 rounded-full mr-3"></span>
+                        最佳表现
+                    </h3>
+                    <div id="best-performers" class="space-y-3">
+                        <!-- 动态生成内容 -->
+                    </div>
+                </div>
+
+                <!-- 最差表现资产 -->
+                <div class="analytics-card rounded-lg p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-5 h-5 bg-gradient-to-r from-red-500 to-red-600 rounded-full mr-3"></span>
+                        需要关注
+                    </h3>
+                    <div id="worst-performers" class="space-y-3">
+                        <!-- 动态生成内容 -->
+                    </div>
+                </div>
+
+                <!-- 月度统计 -->
+                <div class="analytics-card rounded-lg p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <span class="w-5 h-5 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full mr-3"></span>
+                        月度统计
+                    </h3>
+                    <div id="monthly-stats" class="space-y-3">
+                        <!-- 动态生成内容 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 详细数据表格 -->
+            <div class="analytics-card rounded-lg p-6 mt-8">
+                <h3 class="text-xl font-bold text-gray-900 mb-4">详细资产分析</h3>
+                <div class="overflow-x-auto">
+                    <table id="analytics-table" class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">资产</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">成本</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">市值</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">盈亏</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">收益率</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">权重</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="analytics-tbody">
+                            <!-- 动态生成内容 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <p class="text-sm">© 2024 个人投资财务统计系统. 智能管理您的投资组合.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 加载主要JavaScript -->
+    <script src="main.js"></script>
+    
+    <script>
+        // 分析页面专用功能
+        let analyticsData = {
+            monthlyData: [],
+            yearlyData: []
+        };
+
+        // 初始化分析页面
+        function initAnalytics() {
+            updateKeyMetrics();
+            initCharts();
+            updatePerformanceLists();
+            updateAnalyticsTable();
+            
+            // 添加页面加载动画
+            if (typeof anime !== 'undefined') {
+                anime({
+                    targets: '.analytics-card',
+                    translateY: [50, 0],
+                    opacity: [0, 1],
+                    delay: anime.stagger(100),
+                    duration: 800,
+                    easing: 'easeOutQuart'
+                });
+            }
+        }
+
+        // 更新关键指标
+        function updateKeyMetrics() {
+            let totalCost = 0;
+            let totalValue = 0;
+            let monthlyProfit = 0;
+            let yearlyProfit = 0;
+            
+            portfolioData.assets.forEach(asset => {
+                const cost = asset.avgCost * asset.shares;
+                const value = asset.price * asset.shares;
+                totalCost += cost;
+                totalValue += value;
+                
+                // 模拟月度盈利（随机生成）
+                const monthlyChange = value * (Math.random() * 0.1 - 0.05);
+                monthlyProfit += monthlyChange;
+                
+                // 模拟年度盈利
+                const yearlyChange = value * (Math.random() * 0.3 - 0.1);
+                yearlyProfit += yearlyChange;
+            });
+            
+            const totalProfit = totalValue - totalCost;
+            const profitPercentage = totalCost > 0 ? (totalProfit / totalCost * 100) : 0;
+            
+            document.getElementById('total-profit').textContent = 
+                `${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}`;
+            document.getElementById('profit-percentage').textContent = 
+                `${profitPercentage >= 0 ? '+' : ''}${profitPercentage.toFixed(2)}%`;
+            document.getElementById('monthly-profit').textContent = 
+                `${monthlyProfit >= 0 ? '+' : ''}$${monthlyProfit.toFixed(2)}`;
+            document.getElementById('yearly-profit').textContent = 
+                `${yearlyProfit >= 0 ? '+' : ''}$${yearlyProfit.toFixed(2)}`;
+        }
+
+        // 初始化图表
+        function initCharts() {
+            initAssetDistributionChart();
+            initProfitTrendChart();
+        }
+
+        // 资产分布饼图
+        function initAssetDistributionChart() {
+            const chart = echarts.init(document.getElementById('asset-distribution-chart'));
+            
+            const data = [];
+            let totalValue = 0;
+            
+            // 按类型分组计算总价值
+            const typeData = {};
+            portfolioData.assets.forEach(asset => {
+                const value = asset.price * asset.shares;
+                if (asset.currency === 'CNY') {
+                    totalValue += value / portfolioData.exchangeRate; // 转换为美元
+                } else {
+                    totalValue += value;
+                }
+                
+                if (!typeData[asset.type]) {
+                    typeData[asset.type] = 0;
+                }
+                
+                if (asset.currency === 'CNY') {
+                    typeData[asset.type] += value / portfolioData.exchangeRate;
+                } else {
+                    typeData[asset.type] += value;
+                }
+            });
+            
+            // 转换为饼图数据
+            Object.keys(typeData).forEach(type => {
+                data.push({
+                    name: type,
+                    value: typeData[type]
+                });
+            });
+            
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b}: ${c} ({d}%)'
+                },
+                legend: {
+                    orient: 'vertical',
+                    left: 'left',
+                    textStyle: {
+                        color: '#666'
+                    }
+                },
+                series: [{
+                    name: '资产分布',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['60%', '50%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                        borderRadius: 10,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: false,
+                        position: 'center'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: '18',
+                            fontWeight: 'bold'
+                        }
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    data: data,
+                    color: ['#8B9A7A', '#D4B896', '#A8B5A0', '#C4A882']
+                }]
+            };
+            
+            chart.setOption(option);
+            
+            // 响应式
+            window.addEventListener('resize', function() {
+                chart.resize();
+            });
+        }
+
+        // 收益趋势图
+        function initProfitTrendChart() {
+            const chart = echarts.init(document.getElementById('profit-trend-chart'));
+            
+            // 生成模拟的月度收益数据
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            const profitData = [];
+            let baseProfit = 0;
+            
+            for (let i = 0; i < 12; i++) {
+                const change = (Math.random() - 0.4) * 1000; // 模拟月度变化
+                baseProfit += change;
+                profitData.push(baseProfit.toFixed(2));
+            }
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        return params[0].name + '<br/>' + 
+                               params[0].seriesName + ': $' + params[0].value;
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: months,
+                    axisLine: {
+                        lineStyle: {
+                            color: '#8B9A7A'
+                        }
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: {
+                        lineStyle: {
+                            color: '#8B9A7A'
+                        }
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: 'rgba(139, 154, 122, 0.1)'
+                        }
+                    }
+                },
+                series: [{
+                    name: '累计收益',
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'circle',
+                    symbolSize: 8,
+                    lineStyle: {
+                        color: '#8B9A7A',
+                        width: 3
+                    },
+                    itemStyle: {
+                        color: '#8B9A7A'
+                    },
+                    areaStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: 'rgba(139, 154, 122, 0.3)'
+                            }, {
+                                offset: 1, color: 'rgba(139, 154, 122, 0.05)'
+                            }]
+                        }
+                    },
+                    data: profitData
+                }]
+            };
+            
+            chart.setOption(option);
+            
+            // 响应式
+            window.addEventListener('resize', function() {
+                chart.resize();
+            });
+        }
+
+        // 更新表现列表
+        function updatePerformanceLists() {
+            const bestPerformers = document.getElementById('best-performers');
+            const worstPerformers = document.getElementById('worst-performers');
+            
+            // 计算每个资产的收益率
+            const performanceData = portfolioData.assets.map(asset => {
+                const cost = asset.avgCost * asset.shares;
+                const current = asset.price * asset.shares;
+                const profitPercent = cost > 0 ? ((current - cost) / cost * 100) : 0;
+                return {
+                    ...asset,
+                    profitPercent: profitPercent,
+                    profit: current - cost
+                };
+            });
+            
+            // 排序
+            performanceData.sort((a, b) => b.profitPercent - a.profitPercent);
+            
+            // 最佳表现
+            bestPerformers.innerHTML = '';
+            performanceData.slice(0, 3).forEach(asset => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center p-3 bg-green-50 rounded-lg';
+                div.innerHTML = `
+                    <div>
+                        <div class="font-medium text-gray-900">${asset.symbol}</div>
+                        <div class="text-sm text-gray-500">${asset.name}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold text-green-600">+${asset.profitPercent.toFixed(2)}%</div>
+                        <div class="text-sm text-gray-500">${asset.currency} ${asset.profit.toFixed(2)}</div>
+                    </div>
+                `;
+                bestPerformers.appendChild(div);
+            });
+            
+            // 最差表现
+            worstPerformers.innerHTML = '';
+            performanceData.slice(-3).reverse().forEach(asset => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center p-3 bg-red-50 rounded-lg';
+                div.innerHTML = `
+                    <div>
+                        <div class="font-medium text-gray-900">${asset.symbol}</div>
+                        <div class="text-sm text-gray-500">${asset.name}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold ${asset.profitPercent >= 0 ? 'text-green-600' : 'text-red-600'}">
+                            ${asset.profitPercent >= 0 ? '+' : ''}${asset.profitPercent.toFixed(2)}%
+                        </div>
+                        <div class="text-sm text-gray-500">${asset.currency} ${asset.profit.toFixed(2)}</div>
+                    </div>
+                `;
+                worstPerformers.appendChild(div);
+            });
+            
+            // 月度统计
+            const monthlyStats = document.getElementById('monthly-stats');
+            monthlyStats.innerHTML = `
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                        <span class="text-gray-700">本月交易</span>
+                        <span class="font-bold text-blue-600">${Math.floor(Math.random() * 20) + 5}次</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                        <span class="text-gray-700">活跃资产</span>
+                        <span class="font-bold text-purple-600">${portfolioData.assets.length}个</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+                        <span class="text-gray-700">汇率影响</span>
+                        <span class="font-bold text-yellow-600">${(Math.random() * 5 - 2.5).toFixed(2)}%</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 更新分析表格
+        function updateAnalyticsTable() {
+            const tbody = document.getElementById('analytics-tbody');
+            tbody.innerHTML = '';
+            
+            const totalValue = portfolioData.assets.reduce((sum, asset) => {
+                const value = asset.price * asset.shares;
+                if (asset.currency === 'CNY') {
+                    return sum + (value / portfolioData.exchangeRate);
+                } else {
+                    return sum + value;
+                }
+            }, 0);
+            
+            portfolioData.assets.forEach(asset => {
+                const cost = asset.avgCost * asset.shares;
+                const current = asset.price * asset.shares;
+                const profit = current - cost;
+                const profitPercent = cost > 0 ? (profit / cost * 100) : 0;
+                const weight = totalValue > 0 ? (current / totalValue * 100) : 0;
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 transition-colors';
+                row.innerHTML = `
+                    <td class="px-4 py-3">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold mr-3">
+                                ${asset.symbol.substring(0, 2)}
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">${asset.symbol}</div>
+                                <div class="text-sm text-gray-500">${asset.name}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-sm">${asset.currency} ${cost.toFixed(2)}</td>
+                    <td class="px-4 py-3 text-sm">${asset.currency} ${current.toFixed(2)}</td>
+                    <td class="px-4 py-3 text-sm ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">
+                        ${profit >= 0 ? '+' : ''}${asset.currency} ${profit.toFixed(2)}
+                    </td>
+                    <td class="px-4 py-3 text-sm ${profitPercent >= 0 ? 'text-green-600' : 'text-red-600'}">
+                        ${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}%
+                    </td>
+                    <td class="px-4 py-3 text-sm">${weight.toFixed(2)}%</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initAnalytics();
+        });
+    </script>
+</body>
+</html>
